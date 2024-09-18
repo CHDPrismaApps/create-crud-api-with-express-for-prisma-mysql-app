@@ -14,7 +14,7 @@ app.get('/', (req, res) => {
   res.send('HELLO WROLD')
 })
 
-// GET api/course
+// GET api/user
 app.get('/api/users', async (req, res) => {
   // fetch all the users from db
   const allUsers = await prisma.user.findMany({
@@ -35,7 +35,7 @@ app.get('/api/users', async (req, res) => {
 
 });
 
-app.use(express.json())
+
 
 // Use the following JSON format to insert the data to 
 // http client body
@@ -59,9 +59,13 @@ app.use(express.json())
 //   }
 // } 
 // 
+
+app.use(express.json())
+
+// POST api/user
 app.post('/api/user', async (req, res) => {
   console.log('receiving data ...');
-  console.log('body is ', req.body);
+  console.log('body is ', JSON.stringify(req.body));
   try {
     const result = await prisma.user.create({
       data: {
@@ -79,21 +83,20 @@ app.post('/api/user', async (req, res) => {
 });
 
 
-// PUT api/userid/1 TODO
-// app.put('/api/userid/1', async (req, res) => {
-//   // update user by id
-//   const updateUsers = await prisma.user.update({
-//     where: { id: 1 },
-//     data: { published: true },
-//     posts: {
-//       create:
-//         [
-//           { title: 'Update data' }
-//         ]
-//     }
-//   })
-//   console.log(updateUsers);
-// });
+// update POST by id
+// PUT api/updatePostByID/:id
+app.put('/api/updatePostByID/:id', async (req, res) => {
+  const id = req.params.id;
+  console.log('req.params.id: ' + id);
+  console.log('req.body.published: ' + req.body.published);
+  const updatedPost = await prisma.post.update({
+    where: { id: parseInt(req.params.id) },
+    data: { published: true },
+  })
+  console.log('updated POST: ' + JSON.stringify(updatedPost));
+  return res.status(200).json(updatedPost);
+});
+
 
 app.listen(3000, () => {
   console.log('Server is running at port 3000');
