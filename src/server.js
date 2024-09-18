@@ -141,6 +141,10 @@ app.delete('/api/user/:id', async (req, res) => {
 
   // delete User
   const deletedUser = await prisma.user.delete({
+    include: {
+      posts: true,
+      profile: true,
+    },
     where: {
       id: parseInt(req.params.id)
     }

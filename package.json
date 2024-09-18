@@ -6,6 +6,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "nodemon --watch --exec node src/server.js",
+    "dev1": "nodemon --watch --exec node src/serverDeleteRequest.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
