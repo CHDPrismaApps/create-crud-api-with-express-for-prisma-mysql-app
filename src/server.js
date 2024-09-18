@@ -37,8 +37,9 @@ app.get('/api/users', async (req, res) => {
 
 app.use(express.json())
 
-// Use the following JSON format to insert the data 
-// /* Body - JSON Content 
+// Use the following JSON format to insert the data to 
+// http client body
+// HTTP Body - JSON Content 
 //
 //   "name": "create user",
 //    "email": "alice@prisma.io",
@@ -57,12 +58,20 @@ app.use(express.json())
 //     ]
 //   }
 // } 
-// */
+// 
 app.post('/api/user', async (req, res) => {
   console.log('receiving data ...');
   console.log('body is ', req.body);
   try {
-    res.send(req.body);
+    const result = await prisma.user.create({
+      data: {
+        name: req.body.name,
+        email: req.body.email,
+        posts: req.body.email.posts,
+        profile: req.body.email.profile,
+      },
+    })
+    res.json(result);
   }
   catch (err) {
     res.status(400).send(err);
