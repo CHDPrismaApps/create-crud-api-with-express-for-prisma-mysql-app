@@ -18,6 +18,8 @@ app.use((req, res, next) => {
 
 /* 
 // SEE: prisma.schema.prisma
+// USER and POST is one-to-many relationship. 
+// USER and PROFILES is one-to-many relationship.
 // TO DELETE A POST RECORED, WE NEED FIRST TO 
 // 1. DELETE THE POST WITH FOREIGN-KEY: POST-authorId=USER-id  
 // 2. DELETE THE PROFILE WITH FOREIGN-KEY: PROFILEID-userid=USER-id
@@ -29,7 +31,9 @@ app.use((req, res, next) => {
 // select * from user where Id=18;
 // DELETE:
 // delete from post where authorId=18;
+// commit; 
 // delete from profile where userId=18;
+// commit; 
 // delete from user where id =18;
 // commit;  
 */
@@ -43,65 +47,72 @@ app.delete('/api/user/:id', async (req, res) => {
   //Find USER record by ID in USER table | Validation
   try {
     const userById = await prisma.user.findUnique({
-      where: { id: parseInt(paramsUserid) }
+      where: { id: parseInt(req.params.id) }
     });
     if (!userById) {
       return res.status(404).json({
-        err: 'could not find USER Record in table by ID: ' + paramsUserid
+        err: 'could not find USER Record in table by ID: ' + req.params.id
       });
     }
-    // //Find POST record by Author-ID in POST table | Validation
+
+    // Find PROFILE records by User-ID in PROFILE table.
+    // NOTE: User and Profile is a one-to-many relationship. It can return more than one records.
     try {
-      const postByAuthorId = await prisma.post.findUnique({
-        where: { authorId: parseInt(paramsUserid) }
+      const profiles = await prisma.profile.findMany({
+        where: { userId: parseInt(req.params.id) }
       });
-      console.log('postByAuthorId: ' + postByAuthorId);
-      // delete Foreign key | POST-Author-ID = USER-ID | If found
-      if (postByAuthorId) {
-        const deletedPostByAuthorId = await prisma.post.delete({
-          where: {
-            authorId: parseInt(paramsUserid)
-          }
-        })
+      console.log('PROFILES records found by userId: ' + JSON.stringify(profiles));
+      // delete all Profile records with Foreign key (PROFILE-User-ID = USER-ID)
+      // If found process looping all found records and delete them by id.
+      if (profiles && profiles.length > 0) {
+        for (let i = 0; i < profiles.length; i++) {
+          console.log('process delete PROFILES with ID): ' + profiles[i].id);
+          let deletedProfilesById = await prisma.profile.delete({
+            where: { id: parseInt(profiles[i].id) }
+          });
+        }
       }
     }
     catch (err) {
-      console.log('Post record not found with authorId: ' + paramsUserid);
+      console.log('Delete Profil records failed with err: ' + JSON.stringify(err));
+      console.log('Profile record could not deleted with userId: ' + req.params.id);
     }
-    //Find Profile record by PROFILE-User-ID in PROFILE table | Validation
+
+    // Find POST records by Author-ID in POST table.
+    // NOTE: User and POST is a one-to-many relationship. It can return more than one records.
     try {
-      const profileByUserId = await prisma.profile.findUnique({
-        where: { userId: parseInt(paramsUserid) }
+      const posts = await prisma.post.findMany({
+        where: { authorId: parseInt(req.params.id) }
       });
-      console.log('profileByUserId: ' + JSON.stringify(profileByUserId));
-      // delete Foreign key | PROFILE-User-ID = USER-ID | If found 
-      if (profileByUserId) {
-        const deletedProfile = await prisma.profile.delete({
-          where: {
-            userId: parseInt(paramsUserid)
-          }
-        })
+      console.log('POST records found by authorId: ' + JSON.stringify(posts));
+      // delete all Post records with Foreign key (POST-Author-ID = USER-ID)
+      // If found process looping all found records and delete them by id.
+      if (posts && posts.length > 0) {
+        for (let i = 0; i < posts.length; i++) {
+          console.log('process delete POST with ID): ' + posts[i].id);
+          let deletedPostById = await prisma.post.delete({
+            where: { id: parseInt(posts[i].id) }
+          });
+        }
       }
     }
     catch (err) {
-      console.log('Profile record not found with userId: ' + paramsUserid);
+      console.log('Delete POST records faild with err: ' + JSON.stringify(err));
+      console.log('Post record could not deleted with authorId: ' + req.params.id);
     }
+
     // delete User
     try {
       const deletedUser = await prisma.user.delete({
-        include: {
-          posts: true,
-          profile: true,
-        },
         where: {
-          id: parseInt(paramsUserid)
+          id: parseInt(req.params.id)
         }
       })
-      console.log('deletedUser: ' + JSON.stringify(deletedUser));
+      console.log('delete User successfully. deleted-User: ' + JSON.stringify(deletedUser));
       return res.status(200).json(deletedUser);
     }
     catch (err) {
-      console.log('Delete User record failed with Id: ' + paramsUserid);
+      console.log('Delete User record failed with Id: ' + req.params.id);
       console.log('err: ' + JSON.stringify(err));
       return res.status(404).json(err);
     }
@@ -110,59 +121,6 @@ app.delete('/api/user/:id', async (req, res) => {
     console.log('User record not found with id: ' + paramsUserid);
     return res.status(404).json(err);
   }
-
-
-  // //Find POST record by Author-ID in POST table | Validation
-  // try {
-  //   const postByAuthorId = await prisma.post.findUnique({
-  //     where: { authorId: parseInt(paramsUserid) }
-  //   });
-  //   console.log('postByAuthorId: ' + postByAuthorId);
-  //   // delete Foreign key | POST-Author-ID = USER-ID | If found
-  //   if (postByAuthorId) {
-  //     const deletedPostByAuthorId = await prisma.post.delete({
-  //       where: {
-  //         authorId: parseInt(paramsUserid)
-  //       }
-  //     })
-  //   }
-  // }
-  // catch (err) {
-  //   console.log('Post record not found with authorId: ' + paramsUserid);
-  // }
-
-
-  //Find Profile record by PROFILE-User-ID in PROFILE table | Validation
-  // try {
-  //   const profileByUserId = await prisma.profile.findUnique({
-  //     where: { userId: parseInt(paramsUserid) }
-  //   });
-  //   console.log('profileByUserId: ' + profileByUserId);
-  //   // delete Foreign key | PROFILE-User-ID = USER-ID | If found 
-  //   if (profileByUserId) {
-  //     const deletedProfile = await prisma.profile.delete({
-  //       where: {
-  //         userId: parseInt(paramsUserid)
-  //       }
-  //     })
-  //   }
-  // }
-  // catch (err) {
-  //   console.log('Profile record not found with userId: ' + paramsUserid);
-  // }
-
-  // // delete User
-  // const deletedUser = await prisma.user.delete({
-  //   include: {
-  //     posts: true,
-  //     profile: true,
-  //   },
-  //   where: {
-  //     id: parseInt(paramsUserid)
-  //   }
-  // })
-  // console.log('deletedUser: ' + JSON.stringify(deletedUser));
-  // res.status(200).json(deletedUser);
 });
 
 app.listen(3000, () => {
