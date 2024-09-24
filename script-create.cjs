@@ -2,15 +2,12 @@ const { PrismaClient } = require('@prisma/client')
 const prisma = new PrismaClient()
 
 //*******************************************
-// RUN: node script.cjs
-// 1. Create
-// 2. FindMany
-// 3. Update
+// RUN: node script-create.cjs
 //*******************************************
 
 // package.json. add "type": "module"
-// we need to rename the script.js to script.cjs
-
+// we need to rename the script-create.js to script-create.cjs
+// RUN --> node script.cjs 
 
 // To void: Unique constraint failed on the constraint: `User_email_key`
 // add: timestampe after the 'alice'
@@ -22,7 +19,6 @@ const prisma = new PrismaClient()
 //   email   String   @unique
 // }
 async function main() {
-  // Create User 	
   await prisma.user.create({
     data: {
       name: 'Alice',
@@ -36,52 +32,16 @@ async function main() {
     },
   })
 
-  // Find all Users
   const allUsers = await prisma.user.findMany({
     include: {
       posts: true,
       profile: true,
     },
   })
+  console.log("allUsers: "+ JSON.stringify(allUsers))
   console.dir(allUsers, { depth: null })
-
-
-// SEE: prisma.schema.prisma:
-// model Post {
-// ....
-//   id        Int      @id @default(autoincrement())
-//   author    User     @relation(fields: [authorId], references: [id])
-// }
-//
-// model Profile {
-//...
-//   id     Int     @id @default(autoincrement())
-//   user   User    @relation(fields: [userId], references: [id])
-// }
-// model User {
-//   id      Int      @id @default(autoincrement())
-//   email   String   @unique
-//   name    String?
-//   posts   Post[]
-//   profile Profile?
-// }
-  //Find last inserted POST record by ID in POST table
-  const postDesc = await prisma.post.findMany({
-    orderBy: {
-      id: 'desc',
-    },
-    take: 1,
-  })
-  console.log("postDesc: " + JSON.stringify(postDesc));
-  console.log("postDesc[0].id: " + postDesc[0].id);
-  
-  // Update First Decs POST record
-  const updatedPost = await prisma.post.update({
-    where: { id: postDesc[0].id},
-    data: { published: true },
-  })
-  console.log("updatedPost: "+ JSON.stringify(updatedPost));
 }
+
 
 main()
   .then(async () => {
