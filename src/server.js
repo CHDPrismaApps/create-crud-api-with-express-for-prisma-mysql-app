@@ -4,6 +4,17 @@ import express from 'express';
 const app = express();
 const prisma = new PrismaClient();
 
+//********************************
+// RUN SERVER: npm run dev
+//********************************
+// SEE: package.json
+//"scripts": {
+//  "dev": "nodemon --watch --exec node src/server.js",
+//  "dev1": "nodemon --watch --exec node src/serverDeleteRequest.js",
+//  "test": "echo \"Error: no test specified\" && exit 1"
+//},
+//********************************
+
 // custom middleware
 app.use((req, res, next) => {
   console.log(`${req.url} ${new Date()}`);
